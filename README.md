@@ -62,6 +62,38 @@ To execute benchmarks with Tuned configuration:
 
 (The last two commands show the results. The variable REGNUM can be chosen from 0(unrestricted)/32/64/96 to limit register use per thread. The variable GPUNAME must be v100 or p100.)
 
+### Evaluate all generated configurations on A100/H100
+
+The generated CUDA sources under `compiled/float` and `compiled/double`
+contain 146 configurations for each precision. They are the configurations
+preserved in this artifact, not the complete parameter search space. The
+following script compiles and runs every preserved configuration for register
+limits 0 (unrestricted), 32, 64, and 96:
+
+```
+% ./benchmark_generated.sh --gpu a100
+% ./benchmark_generated.sh --gpu h100
+```
+
+Pass one or more kernel names to test only those kernels:
+
+```
+% ./benchmark_generated.sh --gpu a100 j2d5pt star3d1r
+```
+
+A100 is compiled for `sm_80` and H100 for `sm_90`. Compilation concurrency can
+be controlled with `--jobs N`. On a machine without a GPU, use
+`--compile-only` to validate compilation without running a benchmark:
+
+```
+% ./benchmark_generated.sh --gpu h100 --compile-only j2d5pt
+```
+
+Results are written below `results/<gpu>/`. `all_results.csv` contains every
+configuration, including failures, while `best_results.csv` contains the
+highest measured GFLOPS for each kernel and precision. Runs use the Evaluation
+workload (`-s 16384` for 2D, `-s 512` for 3D, and `-t 1000 -n 5`).
+
 
 ## Parameter Customizing
 
