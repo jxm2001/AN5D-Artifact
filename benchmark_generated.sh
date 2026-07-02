@@ -12,7 +12,7 @@ the kernels named as positional arguments.
 
 Options:
   --gpu GPU          Target GPU: a100 (sm_80) or h100 (sm_90), required
-  --jobs N           Maximum parallel nvcc processes (default: nproc, max 10)
+  --jobs N           Maximum parallel nvcc processes (default: nproc)
   --compile-only     Compile without checking for a GPU or running binaries
   --results-dir DIR  Output directory (default: results)
   -h, --help         Show this help
@@ -79,7 +79,6 @@ case "$gpu" in
 esac
 
 [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || die "--jobs must be a positive integer"
-((jobs > 10)) && jobs=10
 
 command -v nvcc >/dev/null 2>&1 || die "nvcc was not found in PATH"
 if ((compile_only == 0)); then
@@ -207,7 +206,7 @@ while IFS='|' read -r kernel precision config bs1 bs2 bt sl regnum host; do
         else
             size=512
             [[ "$kernel" == *2d* ]] && size=16384
-            if CUDA_VISIBLE_DEVICES=0 "$output" -s "$size" -t 1000 -n 5 >"$run_log" 2>&1; then
+            if "$output" -s "$size" -t 1000 -n 5 >"$run_log" 2>&1; then
                 average="$(awk '/^Average:/ {print; exit}' "$run_log")"
                 gflops="$(awk '/^Average:/ {print $2; exit}' "$run_log")"
                 ms="$(awk '/^Average:/ {gsub(/,/, "", $4); print $4; exit}' "$run_log")"
