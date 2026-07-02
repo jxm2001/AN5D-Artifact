@@ -105,7 +105,7 @@ best_csv="$results_root/$gpu/best_results.csv"
     die "best results not found: $best_csv (run benchmark_generated.sh first)"
 
 row="$(awk -F, -v kernel="$kernel" -v precision="$precision" '
-    NR > 1 && $1 == kernel && $2 == precision && $10 == "success" {
+    NR > 1 && $1 == kernel && $2 == precision && $11 == "success" {
         print
         exit
     }
@@ -113,7 +113,7 @@ row="$(awk -F, -v kernel="$kernel" -v precision="$precision" '
 [[ -n "$row" ]] ||
     die "no successful best result for kernel '$kernel' with precision '$precision' in $best_csv"
 
-IFS=, read -r selected_kernel selected_precision bs1 bs2 bt sl regnum gflops ms status log <<< "$row"
+IFS=, read -r selected_kernel selected_precision bs1 bs2 bt sl regnum gflops gstencils ms status log <<< "$row"
 
 if [[ -n "$bs2" ]]; then
     config="${selected_kernel}-${bs1}x${bs2}-${bt}-${sl}"
@@ -125,7 +125,7 @@ binary="$results_root/$gpu/bin/$selected_precision/reg$regnum/$config"
 
 echo "GPU: $gpu"
 echo "Selected: kernel=$selected_kernel precision=$selected_precision bS1=$bs1 bS2=${bs2:-N/A} bT=$bt sl=$sl REGNUM=$regnum"
-echo "Benchmark result: $gflops GFLOPS, $ms ms"
+echo "Benchmark result: $gflops GFLOPS, $gstencils GStencil/s, $ms ms"
 echo "Running: size=$size timestep=$timestep repetitions=5"
 
 exec "$binary" -s "$size" -t "$timestep" -n 5

@@ -188,7 +188,7 @@ wait
 
 all_csv="$result_dir/all_results.csv"
 best_csv="$result_dir/best_results.csv"
-echo 'kernel,precision,bS1,bS2,bT,sl,regnum,gflops,ms,status,log' > "$all_csv"
+echo 'kernel,precision,bS1,bS2,bT,sl,regnum,gflops,gstencils_per_sec,ms,status,log' > "$all_csv"
 
 total_tasks="$(wc -l < "$task_file")"
 current_task=0
@@ -200,6 +200,7 @@ while IFS='|' read -r kernel precision config bs1 bs2 bt sl regnum host; do
     status_file="${output}.compile_status"
     status="$(cat "$status_file" 2>/dev/null || echo compile_failed)"
     gflops=""
+    gstencils=""
     ms=""
     result_log="$compile_log"
 
@@ -213,13 +214,16 @@ while IFS='|' read -r kernel precision config bs1 bs2 bt sl regnum host; do
             if "$output" -s "$size" -t 1000 -n 5 >"$run_log" 2>&1; then
                 average="$(awk '/^Average:/ {print; exit}' "$run_log")"
                 gflops="$(awk '/^Average:/ {print $2; exit}' "$run_log")"
-                ms="$(awk '/^Average:/ {gsub(/,/, "", $4); print $4; exit}' "$run_log")"
+                gstencils="$(awk '/^Average:/ {print $4; exit}' "$run_log")"
+                ms="$(awk '/^Average:/ {print $6; exit}' "$run_log")"
                 if [[ -n "$average" && "$gflops" =~ ^[0-9]+([.][0-9]+)?$ &&
+                      "$gstencils" =~ ^[0-9]+([.][0-9]+)?$ &&
                       "$ms" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
                     status="success"
                 else
                     status="parse_failed"
                     gflops=""
+                    gstencils=""
                     ms=""
                 fi
             else
@@ -231,14 +235,14 @@ while IFS='|' read -r kernel precision config bs1 bs2 bt sl regnum host; do
         echo "[$current_task/$total_tasks] Skipping $kernel ($precision, $config, REGNUM=$regnum): compilation failed"
     fi
 
-    printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
+    printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
         "$kernel" "$precision" "$bs1" "$bs2" "$bt" "$sl" "$regnum" \
-        "$gflops" "$ms" "$status" "$result_log" >> "$all_csv"
+        "$gflops" "$gstencils" "$ms" "$status" "$result_log" >> "$all_csv"
 done < "$task_file"
 
-echo 'kernel,precision,bS1,bS2,bT,sl,regnum,gflops,ms,status,log' > "$best_csv"
+echo 'kernel,precision,bS1,bS2,bT,sl,regnum,gflops,gstencils_per_sec,ms,status,log' > "$best_csv"
 awk -F, '
-    NR == 1 || $10 != "success" { next }
+    NR == 1 || $11 != "success" { next }
     {
         key = $1 SUBSEP $2
         if (!(key in best) || ($8 + 0) > best[key] ||

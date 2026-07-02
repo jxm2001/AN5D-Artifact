@@ -91,8 +91,9 @@ be controlled with `--jobs N`. On a machine without a GPU, use
 
 Results are written below `results/<gpu>/`. `all_results.csv` contains every
 configuration, including failures, while `best_results.csv` contains the
-highest measured GFLOPS for each kernel and precision. Runs use the Evaluation
-workload (`-s 16384` for 2D, `-s 512` for 3D, and `-t 1000 -n 5`).
+highest measured GFLOPS for each kernel and precision. Both GFLOPS and
+GStencil/s are reported. Runs use the Evaluation workload (`-s 16384` for 2D,
+`-s 512` for 3D, and `-t 1000 -n 5`).
 
 After benchmarking, run the best measured configuration for a kernel and
 precision with a custom spatial size and total time-step count:

@@ -82,6 +82,11 @@ double calc_gflops(double total_flop, double ms)
   return (total_flop / ms) / (1000 * 1000);
 }
 
+double calc_gstencils(double total_stencil, double ms)
+{
+  return (total_stencil / ms) / (1000 * 1000);
+}
+
 int benchmark(int compsize, int timestep, int reptnum, bool cpucomp)
 {
   size_t gridarea = 1, comparea = 1;
@@ -92,6 +97,7 @@ int benchmark(int compsize, int timestep, int reptnum, bool cpucomp)
   }
 
   double total_flop = (double)timestep * comparea * BENCH_FPP;
+  double total_stencil = (double)timestep * comparea;
 
   SB_TYPE *A = (SB_TYPE *)malloc(2 * gridarea * sizeof(SB_TYPE));
   SB_TYPE *B = (SB_TYPE *)malloc(2 * gridarea * sizeof(SB_TYPE));
@@ -110,13 +116,16 @@ int benchmark(int compsize, int timestep, int reptnum, bool cpucomp)
   for (int n = 0; n < reptnum; n++) {
     init_grid(A, compsize);
     double ms = kernel_stencil(A, compsize, timestep, true);
-    printf("%7d: %10.4lf GFLOPS, %10.4f ms\n",
-           n, calc_gflops(total_flop, ms), ms);
+    printf("%7d: %10.4lf GFLOPS, %10.4lf GStencil/s, %10.4f ms\n",
+           n, calc_gflops(total_flop, ms),
+           calc_gstencils(total_stencil, ms), ms);
     elapsed += ms;
   }
 
-  printf("Average: %10.4lf GFLOPS, %10.4f ms\n",
-         calc_gflops(total_flop, elapsed / reptnum), elapsed / reptnum);
+  printf("Average: %10.4lf GFLOPS, %10.4lf GStencil/s, %10.4f ms\n",
+         calc_gflops(total_flop, elapsed / reptnum),
+         calc_gstencils(total_stencil, elapsed / reptnum),
+         elapsed / reptnum);
 
   if (cpucomp) {
     puts("\n" "[CPU execution]");
