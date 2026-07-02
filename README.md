@@ -94,6 +94,18 @@ configuration, including failures, while `best_results.csv` contains the
 highest measured GFLOPS for each kernel and precision. Runs use the Evaluation
 workload (`-s 16384` for 2D, `-s 512` for 3D, and `-t 1000 -n 5`).
 
+After benchmarking, run the best measured configuration for a kernel and
+precision with a custom spatial size and total time-step count:
+
+```
+% ./run_best.sh j2d5pt float 9000 500
+% ./run_best.sh star3d1r double 512 1000
+```
+
+The script detects the visible A100/H100 and reads its `best_results.csv`.
+Use `--gpu a100` or `--gpu h100` to override detection. The spatial size still
+applies equally to every spatial dimension.
+
 
 ## Parameter Customizing
 
