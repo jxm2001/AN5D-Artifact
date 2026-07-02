@@ -190,7 +190,10 @@ all_csv="$result_dir/all_results.csv"
 best_csv="$result_dir/best_results.csv"
 echo 'kernel,precision,bS1,bS2,bT,sl,regnum,gflops,ms,status,log' > "$all_csv"
 
+total_tasks="$(wc -l < "$task_file")"
+current_task=0
 while IFS='|' read -r kernel precision config bs1 bs2 bt sl regnum host; do
+    ((current_task += 1))
     output="$bin_dir/$precision/reg$regnum/$config"
     compile_log="$log_dir/$precision/reg$regnum/${config}.compile.log"
     run_log="$log_dir/$precision/reg$regnum/${config}.run.log"
@@ -204,6 +207,7 @@ while IFS='|' read -r kernel precision config bs1 bs2 bt sl regnum host; do
         if ((compile_only == 1)); then
             status="compile_only"
         else
+            echo "[$current_task/$total_tasks] Running $kernel ($precision, $config, REGNUM=$regnum)"
             size=512
             [[ "$kernel" == *2d* ]] && size=16384
             if "$output" -s "$size" -t 1000 -n 5 >"$run_log" 2>&1; then
@@ -223,6 +227,8 @@ while IFS='|' read -r kernel precision config bs1 bs2 bt sl regnum host; do
             fi
             result_log="$run_log"
         fi
+    elif ((compile_only == 0)); then
+        echo "[$current_task/$total_tasks] Skipping $kernel ($precision, $config, REGNUM=$regnum): compilation failed"
     fi
 
     printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
